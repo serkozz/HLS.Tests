@@ -6,3 +6,16 @@ ThirdParty/FFMpeg/*.dll
 ThirdParty/FFMpeg/*.exe
 
 Content/
+
+Frontend/logs
+Frontend/*.log
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/yarn-error.log*
+Frontend/pnpm-debug.log*
+Frontend/lerna-debug.log*
+
+Frontend/node_modules
+Frontend/dist
+Frontend/dist-ssr
+Frontend/*.local
