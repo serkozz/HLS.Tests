@@ -1,0 +1,18 @@
+info:
+  name: Platlist/Delete
+  type: http
+  seq: 2
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/playlist/delete"
+  body:
+    type: json
+    data: '"Yooh_-_MariannE.mp3"'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

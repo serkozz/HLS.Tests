@@ -1,0 +1,8 @@
+Backend/bin
+Backend/obj
+Backend/appsettings.Development.json
+
+ThirdParty/FFMpeg/*.dll
+ThirdParty/FFMpeg/*.exe
+
+Content/

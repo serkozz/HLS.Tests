@@ -1,0 +1,4 @@
+name: BackendEnvironment
+variables:
+  - name: baseUrl
+    value: http://localhost:5205

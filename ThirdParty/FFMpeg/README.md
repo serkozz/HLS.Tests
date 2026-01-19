@@ -1,0 +1,1 @@
+Download ffmpeg https://github.com/BtbN/FFmpeg-Builds/releases and place content on bin folder here 
