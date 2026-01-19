@@ -4,6 +4,11 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddOptions<HLSOptions>()
     .BindConfiguration(nameof(HLSOptions))
@@ -14,6 +19,16 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddSingleton<FFMpeg>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -27,6 +42,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
+
+app.MapGet("test", () => "All working" );
 
 app.MapPost("playlist/create", async (FFMpeg ffmpeg, IOptions<HLSOptions> opt, [FromBody] string mediaFileFullName) =>
 {
@@ -63,6 +81,32 @@ app.MapPost("playlist/create", async (FFMpeg ffmpeg, IOptions<HLSOptions> opt, [
     };
 });
 
+app.MapPost("content/upload", async (IOptions<HLSOptions> opt, IFormFile file) =>
+{
+    if (file == null || file.Length == 0)
+        return Results.BadRequest("Файл не выбран");
+
+    string filePath = Path.Combine(opt.Value.ContentInputPath, file.FileName);
+
+    using var stream = new FileStream(filePath, FileMode.Create);
+    await file.CopyToAsync(stream);
+
+    var problemDetails = new ProblemDetails
+    {
+        Status = 201,
+        Title = "FileUploaded",
+        Detail = $"/Content/Input/{file.FileName}",
+        Instance = "/content/upload"
+    };
+
+    return problemDetails.Status switch
+    {
+        201 => Results.Created(filePath, problemDetails),
+        _ => Results.InternalServerError("Something really really bad happened")
+    };
+})
+.DisableAntiforgery();
+
 app.MapDelete("playlist/delete", async (FFMpeg ffmpeg, IOptions<HLSOptions> opt, [FromBody] string mediaFileFullName) =>
 {
     Utility.ThrowIfPathInvalid(mediaFileFullName, nameof(mediaFileFullName));
@@ -90,7 +134,25 @@ app.MapDelete("playlist/delete", async (FFMpeg ffmpeg, IOptions<HLSOptions> opt,
         200 => Results.Ok(problemDetails),
         204 => Results.NoContent(),
         _ => Results.InternalServerError("Something really really bad happened")
-    }; ;
+    };
+});
+
+app.MapGet("stream/{*path}", async (IOptions<HLSOptions> opt, string path) =>
+{
+    string fullPath = Path.GetFullPath(Path.Combine(opt.Value.ContentOutputPath, path));
+
+    if (!fullPath.StartsWith(opt.Value.ContentOutputPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(fullPath))
+        return Results.NotFound();
+
+    string extension = Path.GetExtension(fullPath).ToLower();
+    string contentType = extension switch
+    {
+        ".m3u8" => "application/vnd.apple.mpegurl",
+        ".ts"   => "video/mp2t",
+        _       => "application/octet-stream"
+    };
+
+    return Results.File(fullPath, contentType);
 });
 
 app.Run();

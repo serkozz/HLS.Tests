@@ -1,4 +1,6 @@
 import './App.css'
+import { FileUploadForm } from './Components/FileUploadForm';
+import HlsAudioPlayer from './Components/HLSAudioPlayer';
 
 function App() {
   return (
@@ -11,7 +13,9 @@ function App() {
       </div>
 
       {/* Основной контент */}
-      <div className="relative z-10 w-full m-[5%] min-h-[90vh] bg-white/5 backdrop-blur-xl rounded-[15px] shadow-2xl flex items-center justify-center border border-white/10">
+      <div className="relative flex gap-10 flex-col z-10 w-full m-[5%] min-h-[90vh] bg-white/5 backdrop-blur-xl rounded-[15px] shadow-2xl items-center justify-center border border-white/10">
+        <FileUploadForm/>
+        <HlsAudioPlayer src='http://localhost:5205/stream/Yooh_-_MariannE/Yooh_-_MariannE.m3u8' />
       </div>
       
     </div>
